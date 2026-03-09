@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>地支時辰挑戰 - 至尊法師版</title>
+    <style>
+        :root {
+            --mystic-green: #00ff88;
+            --mystic-glow: rgba(0, 255, 136, 0.4);
+            --bg: #050a14;
+            --card-bg: rgba(10, 25, 47, 0.85);
+            --text: #e0f2f1;
+            --error: #ff3d00;
+            /* 五行顏色 */
+            --wood: #00e676;
+            --fire: #ff1744;
+            --earth: #ffea00;
+            --metal: #ffffff;
+            --water: #2979ff;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at center, #102a43 0%, #050a14 100%);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        @keyframes rotate-magic {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        #game-container {
+            background: var(--card-bg);
+            width: 90vw;
+            height: 85vh;
+            max-width: 1000px;
+            padding: 30px;
+            border-radius: 40px;
+            border: 2px solid var(--mystic-green);
+            box-shadow: 0 0 30px var(--mystic-glow), inset 0 0 20px var(--mystic-glow);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .top-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--mystic-glow);
+            padding-bottom: 10px;
+        }
+
+        h1 { 
+            margin: 0; 
+            font-size: 1.6rem; 
+            letter-spacing: 4px; 
+            color: var(--mystic-green);
+            text-shadow: 0 0 10px var(--mystic-green);
+        }
+
+        .timer-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+            box-shadow: 0 0 10px var(--mystic-glow);
+        }
+
+        #timer-bar {
+            width: 100%;
+            height: 100%;
+            background: var(--mystic-green);
+            transition: width 0.1s linear;
+        }
+
+        .main-display {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: space-around;
+            gap: 30px;
+        }
+
+        .question-side {
+            flex: 1;
+            text-align: center;
+        }
+
+        .time-wrapper {
+            position: relative;
+            display: inline-block;
+            padding: 40px;
+        }
+
+        .time-wrapper::after {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 2px solid var(--mystic-green);
+            border-radius: 50%;
+            border-style: double;
+            animation: rotate-magic 10s linear infinite reverse;
+        }
+
+        .time-display {
+            font-size: 5rem;
+            font-weight: 800;
+            color: #fff;
+            text-shadow: 0 0 25px var(--mystic-green);
+            font-family: 'Courier New', monospace;
+            z-index: 2;
+        }
+
+        .grid-side {
+            flex: 1.4;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        .branch-btn {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--mystic-green);
+            height: 85px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: var(--mystic-green);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 5px var(--mystic-glow);
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .branch-btn:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .branch-btn.correct-highlight {
+            background: var(--mystic-green);
+            color: var(--bg);
+            box-shadow: 0 0 30px var(--mystic-green);
+            transform: scale(1.05);
+        }
+
+        .branch-btn:active:not(:disabled) {
+            transform: scale(0.9);
+            background: var(--mystic-green);
+            color: var(--bg);
+        }
+
+        .wood { border-color: var(--wood); color: var(--wood); }
+        .fire { border-color: var(--fire); color: var(--fire); }
+        .earth { border-color: var(--earth); color: var(--earth); }
+        .metal { border-color: var(--metal); color: var(--metal); }
+        .water { border-color: var(--water); color: var(--water); }
+
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, var(--card-bg) 20%, var(--bg) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 40px;
+        }
+
+        #start-btn {
+            padding: 25px 70px;
+            font-size: 2.2rem;
+            background: transparent;
+            color: var(--mystic-green);
+            border: 2px solid var(--mystic-green);
+            border-radius: 15px;
+            cursor: pointer;
+            box-shadow: 0 0 20px var(--mystic-glow);
+            transition: all 0.3s;
+            letter-spacing: 5px;
+        }
+
+        #feedback-area {
+            margin-top: 20px;
+            min-height: 80px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            font-size: 1.1rem;
+            color: var(--mystic-green);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-15px); }
+            75% { transform: translateX(15px); }
+        }
+        .wrong-anim { animation: shake 0.4s ease-in-out; }
+
+        @media (orientation: portrait) {
+            .main-display { flex-direction: column; }
+            .grid-side { grid-template-columns: repeat(3, 1fr); width: 100%; }
+            .time-display { font-size: 3.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="overlay">
+            <h1 style="font-size: 3.5rem; margin-bottom: 50px; text-align: center;">至尊時辰修煉</h1>
+            <button id="start-btn">啟動魔法陣</button>
+        </div>
+
+        <div class="top-info">
+            <h1>TEMPORAL CHALLENGE</h1>
+            <div class="stats">
+                <div>SCORE: <span id="score">0</span></div>
+                <div>MAX: <span id="best">0</span></div>
+            </div>
+        </div>
+        
+        <div class="timer-container">
+            <div id="timer-bar"></div>
+        </div>
+
+        <div class="main-display">
+            <div class="question-side">
+                <div style="color: var(--mystic-green); font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 10px;">時空座標</div>
+                <div class="time-wrapper">
+                    <div class="time-display" id="target-time">--:--</div>
+                </div>
+                <div id="feedback-area">
+                    <div id="msg-main" style="font-size: 1.8rem; font-weight: bold;"></div>
+                    <div id="msg-sub" style="font-size: 1.1rem; color: rgba(255,255,255,0.6); margin-top: 8px;"></div>
+                </div>
+            </div>
+
+            <div class="grid-side" id="button-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        const branches = [
+            { id: 0, name: "子", elem: "water", range: "23:00-01:00" },
+            { id: 1, name: "丑", elem: "earth", range: "01:00-03:00" },
+            { id: 2, name: "寅", elem: "wood", range: "03:00-05:00" },
+            { id: 3, name: "卯", elem: "wood", range: "05:00-07:00" },
+            { id: 4, name: "辰", elem: "earth", range: "07:00-09:00" },
+            { id: 5, name: "巳", elem: "fire", range: "09:00-11:00" },
+            { id: 6, name: "午", elem: "fire", range: "11:00-13:00" },
+            { id: 7, name: "未", elem: "earth", range: "13:00-15:00" },
+            { id: 8, name: "申", elem: "metal", range: "15:00-17:00" },
+            { id: 9, name: "酉", elem: "metal", range: "17:00-19:00" },
+            { id: 10, name: "戌", elem: "earth", range: "19:00-21:00" },
+            { id: 11, name: "亥", elem: "water", range: "21:00-23:00" }
+        ];
+
+        let score = 0;
+        let bestScore = localStorage.getItem('shichen_mystic_best') || 0;
+        let timeLeft = 100;
+        let timerInterval;
+        let currentCorrectIdx;
+        let isProcessing = false; // 用於控制答題後的 3 秒冷卻
+        let audioCtx;
+
+        document.getElementById('best').innerText = bestScore;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playSound(freq, type, duration, vol) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playCorrect() { 
+            playSound(523.25, 'sine', 0.1, 0.1); 
+            setTimeout(() => playSound(659.25, 'sine', 0.15, 0.1), 50);
+        }
+        function playWrong() { playSound(92, 'sawtooth', 0.5, 0.2); }
+
+        function shuffle(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex != 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
+
+        function renderButtons() {
+            const grid = document.getElementById('button-grid');
+            grid.innerHTML = '';
+            const shuffled = shuffle([...branches]);
+            shuffled.forEach((b) => {
+                const btn = document.createElement('button');
+                btn.className = `branch-btn ${b.elem}`;
+                btn.id = `btn-${b.id}`;
+                btn.innerText = b.name;
+                btn.onclick = () => checkAnswer(b.id);
+                grid.appendChild(btn);
+            });
+        }
+
+        function generateQuestion() {
+            isProcessing = false;
+            const hour = Math.floor(Math.random() * 24);
+            const min = Math.floor(Math.random() * 60);
+            currentCorrectIdx = Math.floor(((hour + 1) % 24) / 2);
+            document.getElementById('target-time').innerText = 
+                `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+            document.getElementById('msg-main').innerText = "";
+            document.getElementById('msg-sub').innerText = "";
+            renderButtons();
+            resetTimer();
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 100;
+            const bar = document.getElementById('timer-bar');
+            bar.style.width = '100%';
+            bar.style.backgroundColor = 'var(--mystic-green)';
+            
+            // 15 秒一題，每 100ms 執行一次，共 150 次
+            // 100 / 150 = 0.666
+            const speed = 0.666; 
+
+            timerInterval = setInterval(() => {
+                if (isProcessing) return;
+                timeLeft -= speed;
+                bar.style.width = timeLeft + '%';
+                if (timeLeft < 30) bar.style.backgroundColor = '#ffeb3b';
+                if (timeLeft < 15) bar.style.backgroundColor = 'var(--error)';
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    handleWrong("時間崩裂！");
+                }
+            }, 100);
+        }
+
+        function checkAnswer(selectedIdx) {
+            if (isProcessing) return;
+            if (selectedIdx === currentCorrectIdx) {
+                handleRight();
+            } else {
+                handleWrong("法術出錯！");
+            }
+        }
+
+        function handleRight() {
+            isProcessing = true;
+            playCorrect();
+            score += 10;
+            document.getElementById('score').innerText = score;
+            const info = branches[currentCorrectIdx];
+            document.getElementById('msg-main').innerText = "SUCCESS";
+            document.getElementById('msg-main').style.color = "var(--mystic-green)";
+            document.getElementById('msg-sub').innerText = `${info.name}時 (${info.range})`;
+            
+            // 答對也稍微停留一下再換題，體驗較順暢
+            setTimeout(generateQuestion, 1000);
+        }
+
+        function handleWrong(reason) {
+            isProcessing = true;
+            playWrong();
+            clearInterval(timerInterval);
+
+            // 震動動畫
+            const container = document.getElementById('game-container');
+            container.classList.add('wrong-anim');
+            setTimeout(() => container.classList.remove('wrong-anim'), 400);
+
+            // 顯示修正路徑
+            const info = branches[currentCorrectIdx];
+            document.getElementById('msg-main').innerText = "修正路徑中...";
+            document.getElementById('msg-main').style.color = "var(--error)";
+            document.getElementById('msg-sub').innerText = `正確答案為：${info.name}時 (${info.range})`;
+            
+            // 高亮正確按鈕
+            const correctBtn = document.getElementById(`btn-${currentCorrectIdx}`);
+            if (correctBtn) correctBtn.classList.add('correct-highlight');
+
+            // 鎖定所有按鈕
+            document.querySelectorAll('.branch-btn').forEach(btn => btn.disabled = true);
+
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem('shichen_mystic_best', bestScore);
+                document.getElementById('best').innerText = bestScore;
+            }
+
+            // 3秒後進入下一題
+            setTimeout(generateQuestion, 3000);
+        }
+
+        document.getElementById('start-btn').onclick = () => {
+            initAudio();
+            document.getElementById('overlay').style.display = 'none';
+            score = 0;
+            document.getElementById('score').innerText = 0;
+            generateQuestion();
+        };
+    </script>
+</body>
+</html>
